@@ -1,0 +1,41 @@
+.drug-input-wrap {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+}
+
+.required {
+    color: var(--accent);
+}
+
+.quick-add {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 6px;
+    align-items: center;
+}
+
+.quick-label {
+    font-size: 11px;
+    color: var(--text-dim);
+    text-transform: uppercase;
+    letter-spacing: 1px;
+    margin-right: 4px;
+}
+
+.quick-btn {
+    background: var(--bg);
+    border: 1px solid var(--border);
+    border-radius: 6px;
+    padding: 4px 10px;
+    font-family: var(--font-mono);
+    font-size: 11px;
+    color: var(--text-dim);
+    cursor: pointer;
+    transition: all 0.15s;
+}
+
+.quick-btn:hover {
+    border-color: var(--accent);
+    color: var(--accent);
+}
