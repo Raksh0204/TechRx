@@ -11,25 +11,36 @@ export default function App() {
     const [vcfFile, setVcfFile] = useState(null);
     const [drugs, setDrugs] = useState("");
     const [patientId, setPatientId] = useState("");
-    const [apiKey, setApiKey] = useState("");
     const [results, setResults] = useState(null);
     const [loading, setLoading] = useState(false);
     const [error, setError] = useState(null);
-    const [useSample, setUseSample] = useState(false);
 
     const handleAnalyze = async () => {
-        if (!useSample && !vcfFile) { setError("Please upload a VCF file or use sample data."); return; }
+        if (!vcfFile) { setError("Please upload a VCF file."); return; }
         if (!drugs.trim()) { setError("Please enter at least one drug name."); return; }
+        if (!patientId.trim()) { setError("Please enter a Patient ID."); return; }
         setLoading(true); setError(null); setResults(null);
         try {
             const formData = new FormData();
             formData.append("drugs", drugs);
-            if (patientId) formData.append("patient_id", patientId);
-            if (apiKey) formData.append("openai_api_key", apiKey);
-            let endpoint;
-            if (useSample) { endpoint = `${API_BASE}/analyze/sample`; }
-            else { endpoint = `${API_BASE}/analyze`; formData.append("vcf_file", vcfFile); }
-            const response = await fetch(endpoint, { method: "POST", body: formData });
+            formData.append("patient_id", patientId);
+            formData.append("vcf_file", vcfFile);
+            const response = await fetch(`${API_BASE}/analyze`, { method: "POST", body: formData });
+            if (!response.ok) { const err = await response.json(); throw new Error(err.detail || "Analysis failed."); }
+            const data = await response.json();
+            setResults(data.results ? data.results : [data]);
+        } catch (err) { setError(err.message); }
+        finally { setLoading(false); }
+    };
+
+    const handleSample = async () => {
+        if (!drugs.trim()) { setError("Please enter at least one drug name first."); return; }
+        setLoading(true); setError(null); setResults(null);
+        try {
+            const formData = new FormData();
+            formData.append("drugs", drugs);
+            formData.append("patient_id", patientId || "PATIENT_DEMO");
+            const response = await fetch(`${API_BASE}/analyze/sample`, { method: "POST", body: formData });
             if (!response.ok) { const err = await response.json(); throw new Error(err.detail || "Analysis failed."); }
             const data = await response.json();
             setResults(data.results ? data.results : [data]);
@@ -41,50 +52,66 @@ export default function App() {
         <div className="app">
             <header className="header">
                 <div className="header-inner">
-                    <div className="logo"><span className="logo-icon">⬡</span><span className="logo-text">PharmaGuard</span></div>
-                    <p className="tagline">Pharmacogenomic Risk Prediction System</p>
+                    <div className="logo">
+                        <span className="logo-icon">🧬</span>
+                        <span className="logo-text">TechRx</span>
+                    </div>
+                    <span className="header-tag">PHARMACOGENOMIC RISK PREDICTION SYSTEM</span>
                 </div>
             </header>
+
             <main className="main">
                 {!results ? (
                     <div className="input-panel">
                         <div className="hero">
-                            <h1 className="hero-title">Know Your <span className="accent">Genetic Risk</span><br />Before You Prescribe</h1>
-                            <p className="hero-sub">Upload a patient VCF file and enter drug names to receive AI-powered pharmacogenomic risk assessments aligned with CPIC guidelines.</p>
+                            <h1 className="hero-title">
+                                AI-powered Pharmacogenomic<br />
+                                <span className="accent">Risk Prediction System</span>
+                            </h1>
+                            <p className="hero-sub">
+                                Upload VCF file and enter drug name(s) for personalized risk assessment
+                            </p>
                         </div>
+
                         <div className="card">
-                            <div className="sample-toggle">
-                                <label className="toggle-label">
-                                    <input type="checkbox" checked={useSample} onChange={(e) => setUseSample(e.target.checked)} className="toggle-check" />
-                                    <span className="toggle-text">Use sample VCF for demo</span>
-                                </label>
+                            {/* Patient ID */}
+                            <div className="field-group">
+                                <label className="field-label">Patient ID <span className="required">*</span></label>
+                                <input
+                                    className="field-input"
+                                    placeholder="e.g. PATIENT_001"
+                                    value={patientId}
+                                    onChange={(e) => setPatientId(e.target.value)}
+                                />
                             </div>
-                            {!useSample && <FileUpload file={vcfFile} onFileChange={setVcfFile} />}
-                            {useSample && (
-                                <div className="sample-badge"><span className="badge-icon">🧬</span><span>Using built-in sample VCF (CYP2D6, CYP2C19, CYP2C9, SLCO1B1, TPMT, DPYD)</span></div>
-                            )}
-                            <DrugInput value={drugs} onChange={setDrugs} />
-                            <div className="optional-fields">
-                                <div className="field-group">
-                                    <label className="field-label">Patient ID (optional)</label>
-                                    <input className="field-input" placeholder="e.g. PATIENT_001" value={patientId} onChange={(e) => setPatientId(e.target.value)} />
-                                </div>
-                                <div className="field-group">
-                                    <label className="field-label">OpenAI API Key (optional)</label>
-                                    <input className="field-input" type="password" placeholder="sk-..." value={apiKey} onChange={(e) => setApiKey(e.target.value)} />
-                                </div>
+
+                            {/* VCF Upload */}
+                            <div className="field-group">
+                                <label className="field-label">VCF File <span className="required">*</span></label>
+                                <FileUpload file={vcfFile} onFileChange={setVcfFile} />
                             </div>
-                            {error && <div className="error-banner"><span>⚠ {error}</span></div>}
-                            <button className="analyze-btn" onClick={handleAnalyze} disabled={loading}>
-                                {loading ? "Analyzing..." : "Analyze Pharmacogenomic Risk"}
-                            </button>
-                        </div>
-                        <div className="supported-drugs">
-                            <p className="supported-label">Supported Drugs:</p>
-                            <div className="drug-pills">
-                                {["CODEINE", "WARFARIN", "CLOPIDOGREL", "SIMVASTATIN", "AZATHIOPRINE", "FLUOROURACIL"].map(d => (
-                                    <span key={d} className="drug-pill" onClick={() => setDrugs(prev => prev ? `${prev}, ${d}` : d)}>{d}</span>
-                                ))}
+
+                            {/* Drug Input — no label here since DrugInput has its own */}
+                            <div className="field-group">
+                                <label className="field-label">Drug Name(s) <span className="required">*</span></label>
+                                <input
+                                    className="field-input"
+                                    placeholder="e.g. CODEINE, WARFARIN, CLOPIDOGREL (comma-separated)"
+                                    value={drugs}
+                                    onChange={(e) => setDrugs(e.target.value)}
+                                />
+                                <p className="supported-text">Supported: CODEINE, CLOPIDOGREL, WARFARIN, SIMVASTATIN, AZATHIOPRINE, FLUOROURACIL</p>
+                            </div>
+
+                            {error && <div className="error-banner">⚠ {error}</div>}
+
+                            <div className="btn-row">
+                                <button className="analyze-btn" onClick={handleAnalyze} disabled={loading}>
+                                    {loading ? "Analyzing..." : "Analyze VCF"}
+                                </button>
+                                <button className="sample-btn" onClick={handleSample} disabled={loading}>
+                                    ⊡ Try Sample
+                                </button>
                             </div>
                         </div>
                     </div>
@@ -93,7 +120,10 @@ export default function App() {
                 )}
                 {loading && <LoadingSpinner />}
             </main>
-            <footer className="footer"><p>PharmaGuard · RIFT 2026 Hackathon · Not a substitute for professional medical judgment.</p></footer>
+
+            <footer className="footer">
+                <p>TechRx · RIFT 2026 Hackathon · For clinical decision support only.</p>
+            </footer>
         </div>
     );
 }
