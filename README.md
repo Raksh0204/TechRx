@@ -31,6 +31,7 @@ The same drug at the same dose can be completely safe for one patient — and li
 <p align="center">
   <img src="S1.png" width="100%" alt="PharmaGuard Homepage"/>
 </p>
+
 ---
 
 ## 🏗️ Architecture
@@ -65,12 +66,14 @@ VCF File
 ```
 
 <p align="center">
-  <img src="S2.png" width="48%" alt="VCF Upload Form"/>
-  &nbsp;
-  <img src="S3.png" width="48%" alt="Risk Result Card"/>
+  <img src="S2.png" width="100%" alt="VCF Upload Form"/>
 </p>
 
----
+  ---
+  
+<p align="center">
+  <img src="S3.png" width="100%" alt="Risk Result Card"/>
+</p>
 
 ---
 
