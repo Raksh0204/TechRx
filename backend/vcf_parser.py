@@ -1,6 +1,7 @@
 """
-VCF Parser for PharmaGuard
+VCF Parser for TechRx
 Parses VCF v4.2 files and extracts pharmacogenomic variants
+Only includes variants where patient actually carries the alt allele (GT != 0/0)
 """
 
 import re
@@ -8,12 +9,26 @@ from typing import Dict, List, Optional
 
 
 # Target genes for pharmacogenomics analysis
-TARGET_GENES = {"CYP2D6", "CYP2C19", "CYP2C9", "SLCO1B1", "TPMT", "DPYD"}
+TARGET_GENES = {"CYP2D6", "CYP2C19", "CYP2C9", "SLCO1B1", "TPMT", "DPYD", "CYP2B6"}
+
+
+def is_variant_present(sample_field: str) -> bool:
+    """
+    Returns True only if patient actually carries the variant.
+    0/0 and 0|0 = homozygous reference = patient does NOT carry this variant.
+    0/1, 1/0, 1/1 etc = patient carries the variant.
+    """
+    if not sample_field:
+        return False
+    gt = sample_field.split(":")[0]  # GT is always first field
+    gt = gt.replace("|", "/")        # handle phased genotypes
+    return gt not in ("0/0", "./.", ".")
 
 
 def parse_vcf(file_content: str) -> Dict:
     """
     Parse a VCF file and extract pharmacogenomic variants.
+    Only includes variants where GT != 0/0 (patient actually carries the allele).
     Returns a dict with gene -> list of variants
     """
     variants = []
@@ -25,11 +40,9 @@ def parse_vcf(file_content: str) -> Dict:
     for line in lines:
         line = line.strip()
 
-        # Skip empty lines
         if not line:
             continue
 
-        # Parse metadata lines
         if line.startswith("##"):
             if "=" in line:
                 key_val = line[2:].split("=", 1)
@@ -37,16 +50,22 @@ def parse_vcf(file_content: str) -> Dict:
                     metadata[key_val[0]] = key_val[1]
             continue
 
-        # Skip header line
         if line.startswith("#CHROM"):
             continue
 
-        # Parse variant lines
         parts = line.split("\t")
         if len(parts) < 8:
             continue
 
         chrom, pos, vid, ref, alt, qual, filt, info = parts[:8]
+
+        # ── KEY FIX: Check genotype before including variant ──
+        # If sample column exists, only include if patient carries the alt allele
+        if len(parts) >= 10:
+            sample_field = parts[9]  # sample data column
+            if not is_variant_present(sample_field):
+                continue  # 0/0 — patient doesn't carry this variant, skip it
+        # If no sample column (simple VCF), include all variants
 
         # Parse INFO field
         info_dict = parse_info_field(info)
@@ -102,17 +121,17 @@ def parse_info_field(info: str) -> Dict:
 def infer_diplotype(gene: str, variants: List[Dict]) -> str:
     """
     Infer diplotype from list of variants for a gene.
-    Returns string like '*1/*2'
+    Only called with variants that passed the GT filter (patient actually carries them).
     """
     star_alleles = [v.get("star_allele", "") for v in variants if v.get("star_allele")]
 
     if not star_alleles:
-        return "*1/*1"  # Default to normal if no star alleles found
+        return "*1/*1"
 
-    # Deduplicate and sort
     unique_alleles = list(set(star_alleles))
 
     if len(unique_alleles) == 1:
+        # Homozygous for this allele
         return f"{unique_alleles[0]}/{unique_alleles[0]}"
     elif len(unique_alleles) >= 2:
         return f"{unique_alleles[0]}/{unique_alleles[1]}"
@@ -121,17 +140,19 @@ def infer_diplotype(gene: str, variants: List[Dict]) -> str:
 
 
 def get_sample_vcf() -> str:
-    """Returns a sample VCF for testing purposes."""
+    """Returns a sample VCF for testing — uses a high-risk patient profile."""
     return """##fileformat=VCFv4.2
 ##FILTER=<ID=PASS,Description="All filters passed">
 ##INFO=<ID=GENE,Number=1,Type=String,Description="Gene symbol">
 ##INFO=<ID=STAR,Number=1,Type=String,Description="Star allele">
 ##INFO=<ID=RS,Number=1,Type=String,Description="dbSNP rsID">
-#CHROM	POS	ID	REF	ALT	QUAL	FILTER	INFO
-chr22	42522613	rs3892097	C	T	.	PASS	GENE=CYP2D6;STAR=*4;RS=rs3892097
-chr10	96541616	rs4244285	G	A	.	PASS	GENE=CYP2C19;STAR=*2;RS=rs4244285
-chr10	96702047	rs1799853	C	T	.	PASS	GENE=CYP2C9;STAR=*2;RS=rs1799853
-chr12	21331549	rs4149056	T	C	.	PASS	GENE=SLCO1B1;STAR=*5;RS=rs4149056
-chr6	18128556	rs1800462	G	A	.	PASS	GENE=TPMT;STAR=*2;RS=rs1800462
-chr1	97981395	rs3918290	C	T	.	PASS	GENE=DPYD;STAR=*2A;RS=rs3918290
+##FORMAT=<ID=GT,Number=1,Type=String,Description="Genotype">
+#CHROM	POS	ID	REF	ALT	QUAL	FILTER	INFO	FORMAT	SAMPLE
+chr22	42522613	rs3892097	C	T	.	PASS	GENE=CYP2D6;STAR=*4;RS=rs3892097	GT	1/1
+chr10	96541616	rs4244285	G	A	.	PASS	GENE=CYP2C19;STAR=*2;RS=rs4244285	GT	1/1
+chr10	96702047	rs1799853	C	T	.	PASS	GENE=CYP2C9;STAR=*3;RS=rs1799853	GT	1/1
+chr12	21331549	rs4149056	T	C	.	PASS	GENE=SLCO1B1;STAR=*5;RS=rs4149056	GT	1/1
+chr6	18128556	rs1800462	G	A	.	PASS	GENE=TPMT;STAR=*3A;RS=rs1800462	GT	0/1
+chr6	18138997	rs1800462	C	G	.	PASS	GENE=TPMT;STAR=*2;RS=rs1800462	GT	0/1
+chr1	97981395	rs3918290	C	T	.	PASS	GENE=DPYD;STAR=*2A;RS=rs3918290	GT	1/1
 """

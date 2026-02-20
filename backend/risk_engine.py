@@ -142,13 +142,33 @@ DIPLOTYPE_TO_PHENOTYPE = {
     },
     "DPYD": {
         "*1/*1": "Normal Metabolizer",
-        # Intermediate Metabolizer — heterozygous for loss-of-function variants
         "*1/*2A": "Intermediate Metabolizer",
         "*1/*13": "Intermediate Metabolizer",
         "*1/*B3": "Intermediate Metabolizer",
         "*2A/*2A": "Poor Metabolizer",
         "*2A/*13": "Poor Metabolizer",
         "*13/*13": "Poor Metabolizer",
+        "default": "Normal Metabolizer"
+    },
+    "CYP2B6": {
+        # Normal Metabolizer
+        "*1/*1": "Normal Metabolizer",
+        "*1/*4": "Normal Metabolizer",
+        "*1/*22": "Normal Metabolizer",
+        # Intermediate Metabolizer
+        "*1/*6": "Intermediate Metabolizer",
+        "*1/*9": "Intermediate Metabolizer",
+        "*1/*18": "Intermediate Metabolizer",
+        "*4/*6": "Intermediate Metabolizer",
+        "*6/*22": "Intermediate Metabolizer",
+        "*1/*16": "Intermediate Metabolizer",
+        # Slow Metabolizer (equivalent to Poor in CYP2B6 terminology)
+        "*6/*6": "Slow Metabolizer",
+        "*6/*9": "Slow Metabolizer",
+        "*6/*18": "Slow Metabolizer",
+        "*6/*16": "Slow Metabolizer",
+        "*9/*9": "Slow Metabolizer",
+        "*18/*18": "Slow Metabolizer",
         "default": "Normal Metabolizer"
     }
 }
@@ -556,6 +576,117 @@ DRUG_RISK_TABLE = {
                     "Consult oncology for appropriate alternatives based on tumor type and indication."
                 ),
                 "cpic_recommendation": "Avoid fluorouracil and capecitabine. Select alternative chemotherapy regimen."
+            }
+        }
+    },
+
+    "EFAVIRENZ": {
+        "primary_gene": "CYP2B6",
+        "cpic_guideline_url": "https://cpicpgx.org/guidelines/cpic-guideline-for-efavirenz-based-on-cyp2b6-genotype/",
+        "risks": {
+            "Normal Metabolizer": {
+                "risk_label": "Safe",
+                "severity": "none",
+                "confidence_score": 0.90,
+                "recommendation": (
+                    "Standard efavirenz dosing is appropriate (600 mg/day). Normal CYP2B6 activity "
+                    "ensures adequate efavirenz metabolism. Standard CNS side effect monitoring applies "
+                    "(dizziness, vivid dreams, insomnia — typically resolve within 2-4 weeks). "
+                    "Administer at bedtime to minimize CNS effects."
+                ),
+                "cpic_recommendation": "Initiate with standard 600 mg/day dose at bedtime."
+            },
+            "Intermediate Metabolizer": {
+                "risk_label": "Adjust Dosage",
+                "severity": "moderate",
+                "confidence_score": 0.85,
+                "recommendation": (
+                    "Consider efavirenz dose reduction to 400 mg/day. Intermediate CYP2B6 activity "
+                    "results in moderately elevated efavirenz plasma concentrations, increasing risk "
+                    "of CNS toxicity (severe dizziness, depression, suicidal ideation, psychosis). "
+                    "Monitor for neuropsychiatric adverse effects closely during first 4 weeks. "
+                    "Therapeutic drug monitoring (TDM) recommended — target trough concentration 1-4 mg/L."
+                ),
+                "cpic_recommendation": "Consider dose reduction to 400 mg/day. Therapeutic drug monitoring recommended."
+            },
+            "Slow Metabolizer": {
+                "risk_label": "Toxic",
+                "severity": "high",
+                "confidence_score": 0.93,
+                "recommendation": (
+                    "Significant dose reduction required — reduce efavirenz to 400 mg/day OR "
+                    "switch to an alternative antiretroviral. CYP2B6 slow metabolizer status "
+                    "(*6/*6 or equivalent) causes 3-fold higher efavirenz plasma exposure than "
+                    "normal metabolizers. High risk of severe neuropsychiatric toxicity including "
+                    "depression, suicidal ideation, psychosis, and severe CNS effects. "
+                    "Preferred alternatives: dolutegravir or raltegravir-based regimens "
+                    "which are not CYP2B6-dependent. If efavirenz must continue: "
+                    "therapeutic drug monitoring essential, target trough less than 4 mg/L."
+                ),
+                "cpic_recommendation": "Reduce to 400 mg/day or switch to dolutegravir/raltegravir-based regimen. TDM essential."
+            }
+        }
+    },
+
+    "ATOMOXETINE": {
+        "primary_gene": "CYP2D6",
+        "cpic_guideline_url": "https://cpicpgx.org/guidelines/cpic-guideline-for-atomoxetine-based-on-cyp2d6-genotype/",
+        "risks": {
+            "Ultrarapid Metabolizer": {
+                "risk_label": "Ineffective",
+                "severity": "moderate",
+                "confidence_score": 0.88,
+                "recommendation": (
+                    "Atomoxetine may be ineffective at standard doses. Ultrarapid CYP2D6 metabolism "
+                    "causes rapid atomoxetine clearance, resulting in subtherapeutic plasma levels "
+                    "and reduced ADHD symptom control. "
+                    "Consider using higher-than-standard doses with careful monitoring, or switch to "
+                    "a non-CYP2D6-metabolized ADHD medication (e.g., methylphenidate, guanfacine)."
+                ),
+                "cpic_recommendation": "Consider alternative ADHD medication not metabolized by CYP2D6."
+            },
+            "Normal Metabolizer": {
+                "risk_label": "Safe",
+                "severity": "none",
+                "confidence_score": 0.91,
+                "recommendation": (
+                    "Standard atomoxetine dosing is appropriate. Initiate at 0.5 mg/kg/day, "
+                    "titrate to 1.2 mg/kg/day after minimum 3 days (max 1.4 mg/kg/day or 100 mg/day). "
+                    "Normal CYP2D6 activity ensures appropriate atomoxetine plasma levels. "
+                    "Monitor for standard side effects (appetite suppression, insomnia, "
+                    "increased heart rate and blood pressure)."
+                ),
+                "cpic_recommendation": "Use label-recommended dosing. Titrate based on response and tolerability."
+            },
+            "Intermediate Metabolizer": {
+                "risk_label": "Adjust Dosage",
+                "severity": "moderate",
+                "confidence_score": 0.84,
+                "recommendation": (
+                    "Initiate at standard dose but monitor carefully for elevated drug exposure. "
+                    "Intermediate CYP2D6 activity results in moderately increased atomoxetine "
+                    "plasma concentrations. Monitor closely for cardiovascular effects "
+                    "(tachycardia, hypertension) and psychiatric effects. "
+                    "Dose reduction may be required if adverse effects emerge."
+                ),
+                "cpic_recommendation": "Standard dosing with enhanced monitoring for adverse effects."
+            },
+            "Poor Metabolizer": {
+                "risk_label": "Toxic",
+                "severity": "high",
+                "confidence_score": 0.94,
+                "recommendation": (
+                    "Reduce atomoxetine starting dose by 50% — initiate at 0.5 mg/kg/day and "
+                    "do NOT exceed 1.2 mg/kg/day. "
+                    "CYP2D6 poor metabolizer status causes 10-fold higher atomoxetine AUC compared "
+                    "to normal metabolizers, dramatically increasing toxicity risk. "
+                    "High risk of severe cardiovascular effects (marked tachycardia, hypertension, "
+                    "QTc prolongation), psychiatric effects (anxiety, irritability), "
+                    "and urinary retention. "
+                    "Baseline and periodic ECG monitoring recommended. "
+                    "Consider alternative ADHD therapy (methylphenidate, guanfacine) if toxicity occurs."
+                ),
+                "cpic_recommendation": "Reduce starting dose by 50%. Max dose 1.2 mg/kg/day. ECG monitoring recommended."
             }
         }
     }

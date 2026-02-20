@@ -177,14 +177,13 @@ export default function App() {
                                 />
                                 <div className="quick-add">
                                     <span className="quick-label">Quick add:</span>
-                                    {["CODEINE", "WARFARIN", "CLOPIDOGREL", "SIMVASTATIN", "AZATHIOPRINE", "FLUOROURACIL"].map(d => (
-                                        <button key={d} className="quick-btn" type="button" onClick={() => addDrug(d)}>
-                                            {d}
-                                        </button>
+                                    {["CODEINE", "WARFARIN", "CLOPIDOGREL", "SIMVASTATIN", "AZATHIOPRINE", "FLUOROURACIL", "EFAVIRENZ", "ATOMOXETINE"].map(d => (<button key={d} className="quick-btn" type="button" onClick={() => addDrug(d)}>
+                                        {d}
+                                    </button>
                                     ))}
                                 </div>
                                 <p className="supported-text">
-                                    ⚡ Supported: CODEINE · CLOPIDOGREL · WARFARIN · SIMVASTATIN · AZATHIOPRINE · FLUOROURACIL
+                                    ⚡ Supported: CODEINE, CLOPIDOGREL, WARFARIN, SIMVASTATIN, AZATHIOPRINE, FLUOROURACIL, EFAVIRENZ, ATOMOXETINE
                                 </p>
                             </div>
 
